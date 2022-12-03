@@ -3,11 +3,11 @@
  <img width=200px height=200px src="https://i.imgur.com/6wj0hh6.jpg" alt="Project logo"></a>
 </p>
 
-<h3 align="center">Oasys Pumbler</h3>
+<h3 align="center">Project Name</h3>
 
 ---
 
-<p align="center"> Servico responsavel por gerenciar as entidades necessarias para construcao de um fluxo de processamento. 
+<p align="center"> Description
     <br> 
 </p>
 
