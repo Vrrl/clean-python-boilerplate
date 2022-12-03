@@ -1,0 +1,94 @@
+version: '3'
+services:
+  api:
+    hostname: oasys-pumbler
+    build:
+      context: ./
+      dockerfile: dockerfile
+    depends_on:
+      - postgres
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/code
+    networks:
+      - oasys-pumbler
+    restart: unless-stopped
+    ports:
+        - 80:80
+    environment:
+      DATABASE_CONNECTION_STRING: postgresql://postgres:postgres@postgres:5432/
+      SUPERTOKENS_CONNECTION_URI: http://supertokens:3567
+
+  supertokens:
+    image: registry.supertokens.io/supertokens/supertokens-postgresql
+    restart: always
+    hostname: supertokens
+    ports:
+      - '3567:3567'
+    networks:
+        - oasys-pumbler
+
+  postgres:
+    image: postgres:14.1-alpine
+    restart: always
+    hostname: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    networks:
+        - oasys-pumbler
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    restart: always
+    networks: 
+      - oasys-pumbler
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    restart: always
+    hostname: kafka
+    networks: 
+      - oasys-pumbler
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    networks: 
+      - oasys-pumbler
+    depends_on:
+      - kafka
+    ports:
+      - 19000:9000
+    environment:
+      KAFKA_BROKERCONNECT: kafka:29092
+
+  redis:
+    image: redis
+    restart: always
+    command: redis-server --requirepass redispass --appendonly yes
+    hostname: redis
+    networks: 
+      - oasys-pumbler
+    ports:
+      - "6379:6379"
+
+networks: 
+  oasys-pumbler:
+    driver: bridge
+
